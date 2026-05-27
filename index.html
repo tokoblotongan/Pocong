@@ -6,7 +6,12 @@
     <title>Pocong Jump - Petualangan Pocongan Jawa</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     <style>
-        body { margin: 0; background: #000; overflow: hidden; font-family: Arial; }
+        body { 
+            margin: 0; 
+            background: #000; 
+            overflow: hidden; 
+            font-family: Arial, sans-serif;
+        }
         #game { margin: 0 auto; display: block; }
     </style>
 </head>
@@ -18,7 +23,6 @@
             }
 
             preload() {
-                // Asset sementara (kita pakai warna dulu)
                 this.load.image('ground', 'https://labs.phaser.io/assets/sprites/platform.png');
                 this.load.image('nisan', 'https://labs.phaser.io/assets/sprites/block.png');
                 this.load.spritesheet('pocong', 'https://labs.phaser.io/assets/sprites/dude.png', 
@@ -26,20 +30,17 @@
             }
 
             create() {
-                this.add.text(400, 50, 'POCONG JUMP', { fontSize: '32px', fill: '#ff0' }).setOrigin(0.5);
-
-                // Background sederhana
                 this.cameras.main.setBackgroundColor('#1a0033');
+                
+                this.add.text(400, 40, 'POCONG JUMP', { fontSize: '40px', fill: '#ff0', fontStyle: 'bold' }).setOrigin(0.5);
+                this.add.text(400, 80, 'Petualangan Pocongan Jawa', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
 
-                // Platform tanah
                 this.platforms = this.physics.add.staticGroup();
-                this.platforms.create(400, 550, 'ground').setScale(2).refreshBody();
+                this.platforms.create(400, 550, 'ground').setScale(2.5).refreshBody();
+                this.platforms.create(150, 420, 'nisan').setScale(1.8);
+                this.platforms.create(550, 320, 'nisan').setScale(1.5);
+                this.platforms.create(300, 250, 'nisan');
 
-                // Papan Nisan (sebagai platform)
-                this.platforms.create(200, 400, 'nisan').setScale(1.5);
-                this.platforms.create(600, 300, 'nisan');
-
-                // Player Pocong
                 this.player = this.physics.add.sprite(100, 400, 'pocong');
                 this.player.setBounce(0.2);
                 this.player.setCollideWorldBounds(true);
@@ -48,21 +49,16 @@
 
                 this.cursors = this.input.keyboard.createCursorKeys();
 
-                // Teks info
-                this.add.text(10, 10, '← → Lari   ↑ Lompat\nPocong Jawa Edition', { fontSize: '18px', fill: '#fff' });
+                this.add.text(10, 10, '← → = Lari\n↑ = Lompat Tinggi', { fontSize: '18px', fill: '#0f0' });
             }
 
             update() {
-                if (this.cursors.left.isDown) {
-                    this.player.setVelocityX(-260);
-                } else if (this.cursors.right.isDown) {
-                    this.player.setVelocityX(260);
-                } else {
-                    this.player.setVelocityX(0);
-                }
+                if (this.cursors.left.isDown) this.player.setVelocityX(-280);
+                else if (this.cursors.right.isDown) this.player.setVelocityX(280);
+                else this.player.setVelocityX(0);
 
                 if (this.cursors.up.isDown && this.player.body.touching.down) {
-                    this.player.setVelocityY(-580); // Lompat tinggi ala pocong
+                    this.player.setVelocityY(-620);
                 }
             }
         }
@@ -71,10 +67,7 @@
             type: Phaser.AUTO,
             width: 800,
             height: 600,
-            physics: {
-                default: 'arcade',
-                arcade: { gravity: { y: 800 }, debug: false }
-            },
+            physics: { default: 'arcade', arcade: { gravity: { y: 900 } } },
             scene: PocongGame
         };
 
