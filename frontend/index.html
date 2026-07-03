@@ -2,88 +2,37 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Mario Multiplayer</title>
-    <!-- Memuat Phaser dan Socket.io melalui CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- CSS Dasar untuk memastikan game memenuhi layar dan rapi -->
     <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background: #333; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            background-color: #333; 
+            overflow: hidden; 
+        }
+        canvas { 
+            display: block; 
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
     </style>
+
+    <!-- Memuat Library Phaser.js dari CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    
+    <!-- Memuat Library Socket.io dari CDN -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 </head>
 <body>
 
-<script>
-    // Konfigurasi untuk Vercel: Gunakan URL Railway dari Environment Variable
-    // Jika tidak ada, gunakan localhost untuk testing lokal
-    const SERVER_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'ISI_URL_RAILWAY_ANDA_DISINI';
-    const socket = io(SERVER_URL);
+    <!-- Skrip logika game Anda -->
+    <script src="script.js"></script>
 
-    const config = {
-        type: Phaser.AUTO,
-        width: 800,
-        height: 600,
-        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
-        scene: { preload, create, update }
-    };
-
-    const game = new Phaser.Game(config);
-    let player;
-    let otherPlayers = {};
-
-    function preload() {
-        this.load.image('player', 'https://labs.phaser.io/assets/sprites/mushroom.png');
-    }
-
-    function create() {
-        const self = this;
-        this.otherPlayers = this.physics.add.group();
-
-        // Menerima data semua pemain saat baru masuk
-        socket.on('currentPlayers', (players) => {
-            Object.keys(players).forEach(id => {
-                if (id === socket.id) addPlayer(self, players[id]);
-                else addOtherPlayer(self, id, players[id]);
-            });
-        });
-
-        // Pemain baru masuk
-        socket.on('newPlayer', (info) => addOtherPlayer(self, info.id, info));
-
-        // Pemain lain bergerak
-        socket.on('playerMoved', (info) => {
-            if (otherPlayers[info.id]) otherPlayers[info.id].setPosition(info.x, info.y);
-        });
-
-        // Pemain keluar
-        socket.on('disconnect', (id) => {
-            if (otherPlayers[id]) {
-                otherPlayers[id].destroy();
-                delete otherPlayers[id];
-            }
-        });
-
-        this.cursors = this.input.keyboard.createCursorKeys();
-    }
-
-    function addPlayer(scene, info) {
-        player = scene.physics.add.sprite(info.x, info.y, 'player');
-    }
-
-    function addOtherPlayer(scene, id, info) {
-        const other = scene.physics.add.sprite(info.x, info.y, 'player');
-        other.setTint(0xff0000);
-        otherPlayers[id] = other;
-    }
-
-    function update() {
-        if (player) {
-            let moved = false;
-            if (this.cursors.left.isDown) { player.x -= 5; moved = true; }
-            if (this.cursors.right.isDown) { player.x += 5; moved = true; }
-
-            if (moved) socket.emit('playerMovement', { x: player.x, y: player.y });
-        }
-    }
-</script>
 </body>
 </html>
