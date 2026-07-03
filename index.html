@@ -1,77 +1,97 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pocong Jump - Petualangan Pocongan Jawa</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    <title>Mario Simple Multiplayer</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
     <style>
-        body { 
-            margin: 0; 
-            background: #000; 
-            overflow: hidden; 
-            font-family: Arial, sans-serif;
-        }
-        #game { margin: 0 auto; display: block; }
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
-    <script>
-        class PocongGame extends Phaser.Scene {
-            constructor() {
-                super('PocongGame');
-            }
 
-            preload() {
-                this.load.image('ground', 'https://labs.phaser.io/assets/sprites/platform.png');
-                this.load.image('nisan', 'https://labs.phaser.io/assets/sprites/block.png');
-                this.load.spritesheet('pocong', 'https://labs.phaser.io/assets/sprites/dude.png', 
-                    { frameWidth: 32, frameHeight: 48 });
-            }
+<script>
+    // Konfigurasi Game
+    const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        physics: { default: 'arcade', arcade: { gravity: { y: 0 } } },
+        scene: { preload, create, update }
+    };
 
-            create() {
-                this.cameras.main.setBackgroundColor('#1a0033');
-                
-                this.add.text(400, 40, 'POCONG JUMP', { fontSize: '40px', fill: '#ff0', fontStyle: 'bold' }).setOrigin(0.5);
-                this.add.text(400, 80, 'Petualangan Pocongan Jawa', { fontSize: '20px', fill: '#fff' }).setOrigin(0.5);
+    const game = new Phaser.Game(config);
+    let socket;
+    let player;
+    let otherPlayers = {};
 
-                this.platforms = this.physics.add.staticGroup();
-                this.platforms.create(400, 550, 'ground').setScale(2.5).refreshBody();
-                this.platforms.create(150, 420, 'nisan').setScale(1.8);
-                this.platforms.create(550, 320, 'nisan').setScale(1.5);
-                this.platforms.create(300, 250, 'nisan');
+    function preload() {
+        this.load.image('player', 'https://labs.phaser.io/assets/sprites/mushroom.png');
+    }
 
-                this.player = this.physics.add.sprite(100, 400, 'pocong');
-                this.player.setBounce(0.2);
-                this.player.setCollideWorldBounds(true);
+    function create() {
+        const self = this;
+        socket = io('http://localhost:3000');
+        
+        // Buat grup untuk pemain lain
+        this.otherPlayers = this.physics.add.group();
 
-                this.physics.add.collider(this.player, this.platforms);
-
-                this.cursors = this.input.keyboard.createCursorKeys();
-
-                this.add.text(10, 10, '← → = Lari\n↑ = Lompat Tinggi', { fontSize: '18px', fill: '#0f0' });
-            }
-
-            update() {
-                if (this.cursors.left.isDown) this.player.setVelocityX(-280);
-                else if (this.cursors.right.isDown) this.player.setVelocityX(280);
-                else this.player.setVelocityX(0);
-
-                if (this.cursors.up.isDown && this.player.body.touching.down) {
-                    this.player.setVelocityY(-620);
+        // Saat terhubung, terima data pemain lain
+        socket.on('currentPlayers', (players) => {
+            Object.keys(players).forEach(id => {
+                if (id === socket.id) {
+                    addPlayer(self, players[id]);
+                } else {
+                    addOtherPlayer(self, id, players[id]);
                 }
+            });
+        });
+
+        // Event saat ada pemain baru masuk
+        socket.on('newPlayer', (playerInfo) => {
+            addOtherPlayer(self, playerInfo.id, playerInfo);
+        });
+
+        // Event saat pemain lain bergerak
+        socket.on('playerMoved', (playerInfo) => {
+            if (otherPlayers[playerInfo.id]) {
+                otherPlayers[playerInfo.id].setPosition(playerInfo.x, playerInfo.y);
+            }
+        });
+
+        // Event saat ada yang keluar
+        socket.on('disconnect', (id) => {
+            if (otherPlayers[id]) {
+                otherPlayers[id].destroy();
+                delete otherPlayers[id];
+            }
+        });
+
+        this.cursors = this.input.keyboard.createCursorKeys();
+    }
+
+    function addPlayer(scene, info) {
+        player = scene.physics.add.sprite(info.x, info.y, 'player');
+    }
+
+    function addOtherPlayer(scene, id, info) {
+        const other = scene.physics.add.sprite(info.x, info.y, 'player');
+        other.setTint(0xff0000); // Warna merah untuk membedakan pemain lain
+        otherPlayers[id] = other;
+    }
+
+    function update() {
+        if (player) {
+            let moved = false;
+            if (this.cursors.left.isDown) { player.x -= 5; moved = true; }
+            if (this.cursors.right.isDown) { player.x += 5; moved = true; }
+
+            if (moved) {
+                socket.emit('playerMovement', { x: player.x, y: player.y });
             }
         }
-
-        const config = {
-            type: Phaser.AUTO,
-            width: 800,
-            height: 600,
-            physics: { default: 'arcade', arcade: { gravity: { y: 900 } } },
-            scene: PocongGame
-        };
-
-        new Phaser.Game(config);
-    </script>
+    }
+</script>
 </body>
 </html>
