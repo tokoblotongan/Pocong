@@ -28,8 +28,12 @@ io.on('connection', (socket) => {
         id: socket.id
     };
 
-    socket.emit('currentPlayers', players);
     socket.broadcast.emit('newPlayer', players[socket.id]);
+
+    // Kirim data pemain saat client siap (menghindari masalah timing)
+    socket.on('requestPlayers', () => {
+        socket.emit('currentPlayers', players);
+    });
 
     socket.on('playerMovement', (data) => {
         if (players[socket.id]) {

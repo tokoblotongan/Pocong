@@ -88,6 +88,9 @@ function create() {
             delete otherPlayers[playerId];
         }
     });
+
+    // Minta data pemain setelah semua listener siap (fix timing issue)
+    socket.emit('requestPlayers');
 }
 
 function addPlayer(scene, playerInfo, isLocal) {
