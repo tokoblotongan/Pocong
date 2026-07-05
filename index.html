@@ -27,8 +27,19 @@
 </head>
 <body>
     <script>
-        // Connect to backend on port 3000 (relative host, works in dev and prod)
-        const socket = io(window.location.protocol + '//' + window.location.hostname + ':3000');
+        // URL backend Replit — digunakan saat deploy di Vercel atau domain lain
+        const BACKEND_URL = "https://3fd1f476-22bb-494d-a17f-1d479fc3afb6-00-3rlxite7gedhd.pike.replit.dev";
+
+        // Jika dibuka dari Replit sendiri, konek ke server yang sama (relatif)
+        // Jika dari Vercel atau domain lain, konek ke Replit backend
+        const isReplit = window.location.hostname.includes('replit.dev') || 
+                         window.location.hostname.includes('repl.co') ||
+                         window.location.hostname === 'localhost' ||
+                         window.location.hostname === '0.0.0.0';
+
+        const socket = isReplit 
+            ? io() 
+            : io(BACKEND_URL);
     </script>
     <script src="frontend/script.js"></script>
 </body>

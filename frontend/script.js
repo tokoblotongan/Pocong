@@ -82,7 +82,7 @@ function create() {
         }
     });
 
-    socket.on('disconnect', (playerId) => {
+    socket.on('playerDisconnected', (playerId) => {
         if (otherPlayers[playerId]) {
             otherPlayers[playerId].destroy();
             delete otherPlayers[playerId];
